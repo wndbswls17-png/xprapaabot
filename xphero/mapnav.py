@@ -101,14 +101,14 @@ class MapNav:
         return "lost"
 
     # ---- 경로 기록 (사람이 직접 걸은 길을 저장) ----
-    def record(self, seconds, interval=0.8):
-        """지도를 열고 seconds 동안 내 점 위치를 모은다. [(x,y), ...]"""
+    def record(self, seconds, interval=0.8, timed=False):
+        """지도를 열고 seconds 동안 내 점 위치를 모은다. [(x,y), ...] (timed면 (x,y,초))"""
         self.open()
-        pts, end = [], time.time() + seconds
-        while time.time() < end:
+        pts, t0 = [], time.time()
+        while time.time() - t0 < seconds:
             dot, _ = self.locate(self.dev.screencap(), house=False)
             if dot:
-                pts.append(dot)
+                pts.append((dot[0], dot[1], time.time() - t0) if timed else dot)
             time.sleep(interval)
         return pts
 
@@ -128,3 +128,21 @@ def simplify(pts, eps=25):
     if dmax <= eps:
         return [pts[0], pts[-1]]
     return simplify(pts[: idx + 1], eps)[:-1] + simplify(pts[idx:], eps)
+
+
+def split_route(timed, still_px=12, still_s=6, moved_px=40):
+    """한 번에 걸은 경로를 '멈춘 지점'에서 (가는 길, 순찰 길)로 나눈다. 못 찾으면 None.
+
+    출발점을 벗어난 뒤 처음으로 still_s초 이상 제자리(still_px 이내)에 있던 곳이 경계다.
+    """
+    pts = [(x, y) for x, y, _ in timed]
+    start = next((i for i, p in enumerate(pts) if math.hypot(p[0] - pts[0][0], p[1] - pts[0][1]) > moved_px), None)
+    if start is None:
+        return None
+    for i in range(start, len(timed)):
+        j = i
+        while j + 1 < len(timed) and math.hypot(pts[j + 1][0] - pts[i][0], pts[j + 1][1] - pts[i][1]) <= still_px:
+            j += 1
+        if timed[j][2] - timed[i][2] >= still_s:
+            return pts[: i + 1], pts[j:]
+    return None

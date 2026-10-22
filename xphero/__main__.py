@@ -8,7 +8,7 @@ import yaml
 
 from . import imaging
 from .bot import Bot, log
-from .mapnav import simplify
+from .mapnav import simplify, split_route
 from .device import Device
 from .vision import Vision, load_frame, normalize
 
@@ -51,7 +51,7 @@ def main():
     p = sub.add_parser("calibrate", help="걷기 방향 보정 (게임 화면에서 지도를 자동으로 연다)")
     p.add_argument("--delay", type=int, default=0)
     p = sub.add_parser("record", help="내가 직접 걷는 길을 기록: record patrol|circle")
-    p.add_argument("what", choices=["patrol", "circle", "approach"])
+    p.add_argument("what", choices=["route", "patrol", "circle", "approach"])
     p.add_argument("--seconds", type=int, default=0)
     p.add_argument("--delay", type=int, default=0)
     p = sub.add_parser("check", help="저장된 스크린샷으로 인식 결과 확인")
@@ -91,14 +91,22 @@ def main():
             bot.nav.calibrate()
             bot.nav.close()
         else:
-            secs = a.seconds or {"patrol": 90, "approach": 40, "circle": 6}[a.what]
-            todo = {"patrol": "사냥할 길을 한 바퀴 직접 걸어", "approach": "점선 원에서 사냥터 시작점까지 직접 걸어", "circle": "점선 원 안에 서 있어"}[a.what]
+            secs = a.seconds or {"route": 150, "patrol": 90, "approach": 40, "circle": 6}[a.what]
+            todo = {"route": "마을 점선 원에서 사냥터까지 걸어가 → 거기서 8초 멈췄다가 → 사냥 길을 한 바퀴 돌고 → 제자리에 서", "patrol": "사냥할 길을 한 바퀴 직접 걸어", "approach": "점선 원에서 사냥터 시작점까지 직접 걸어", "circle": "점선 원 안에 서 있어"}[a.what]
             log(f"기록 시작: {secs}초. 지금부터 {todo}.")
-            pts = bot.nav.record(secs)
+            pts = bot.nav.record(secs, timed=(a.what == "route"))
             bot.nav.close()
             if len(pts) < 2:
                 raise SystemExit("점을 거의 못 읽었어. 지도가 열려 있고 점이 보이는지 확인해줘.")
-            if a.what == "circle":
+            if a.what == "route":
+                parts = split_route(pts)
+                if not parts:
+                    raise SystemExit("멈춘 지점을 못 찾았어. 사냥터 도착 후 8초 이상 가만히 서 있어야 해. 다시 해줘.")
+                ap, pa = ([list(p) for p in simplify(x)] for x in parts)
+                save_route(approach=ap, patrol=pa)
+                log(f"가는 길 {len(ap)}지점 {ap}")
+                log(f"순찰 길 {len(pa)}지점 {pa}")
+            elif a.what == "circle":
                 cx = round(sum(p[0] for p in pts) / len(pts)); cy = round(sum(p[1] for p in pts) / len(pts))
                 save_route(circle=[cx, cy])
                 log(f"점선 원 위치 저장: {[cx, cy]}  (읽은 점 {len(pts)}개)")
