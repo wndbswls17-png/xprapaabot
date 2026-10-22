@@ -76,6 +76,10 @@ class Bot:
             raise RuntimeError("config.yaml 의 route.patrol 이 비어 있어. `python -m xphero where` 로 좌표를 잡아 채워줘.")
         full = self._confirmed(self.bag_full)
         self.nav.open()
+        for wp in self.cfg["route"].get("approach", []):
+            if self.nav.goto(wp, stop=full) == "stop":
+                log("가방 가득 참 -> 귀환")
+                return
         while True:
             for wp in self.cfg["route"]["patrol"]:
                 res = self.nav.goto(wp, stop=full)
@@ -88,6 +92,8 @@ class Bot:
 
     def go_home(self):
         """지도에서 집 아이콘 위치로 간다. 지도는 열린 상태에서 시작."""
+        for wp in reversed(self.cfg["route"].get("approach", [])):
+            self.nav.goto(wp, tol=40)  # 올 때 걸어온 길을 거꾸로 되짚어 벽을 피한다
         for attempt in range(1, 4):
             _, house = self.nav.locate(self.dev.screencap())
             if not house:

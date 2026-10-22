@@ -20,8 +20,9 @@ def load_cfg(path):
     rj = ROOT / "route.json"  # `record` 명령이 저장한 경로가 config.yaml 값을 덮어쓴다
     if rj.exists():
         saved = json.loads(rj.read_text())
-        if "patrol" in saved:
-            cfg["route"]["patrol"] = saved["patrol"]
+        for k in ("patrol", "approach"):
+            if k in saved:
+                cfg["route"][k] = saved[k]
         if "circle" in saved:
             cfg["town"]["circle"] = saved["circle"]
     return cfg
@@ -50,7 +51,7 @@ def main():
     p = sub.add_parser("calibrate", help="걷기 방향 보정 (게임 화면에서 지도를 자동으로 연다)")
     p.add_argument("--delay", type=int, default=0)
     p = sub.add_parser("record", help="내가 직접 걷는 길을 기록: record patrol|circle")
-    p.add_argument("what", choices=["patrol", "circle"])
+    p.add_argument("what", choices=["patrol", "circle", "approach"])
     p.add_argument("--seconds", type=int, default=0)
     p.add_argument("--delay", type=int, default=0)
     p = sub.add_parser("check", help="저장된 스크린샷으로 인식 결과 확인")
@@ -90,8 +91,9 @@ def main():
             bot.nav.calibrate()
             bot.nav.close()
         else:
-            secs = a.seconds or (90 if a.what == "patrol" else 6)
-            log(f"기록 시작: {secs}초. 지금부터 {'사냥할 길을 한 바퀴 직접 걸어' if a.what == 'patrol' else '점선 원 안에 서 있어'}.")
+            secs = a.seconds or {"patrol": 90, "approach": 40, "circle": 6}[a.what]
+            todo = {"patrol": "사냥할 길을 한 바퀴 직접 걸어", "approach": "점선 원에서 사냥터 시작점까지 직접 걸어", "circle": "점선 원 안에 서 있어"}[a.what]
+            log(f"기록 시작: {secs}초. 지금부터 {todo}.")
             pts = bot.nav.record(secs)
             bot.nav.close()
             if len(pts) < 2:
@@ -102,8 +104,8 @@ def main():
                 log(f"점선 원 위치 저장: {[cx, cy]}  (읽은 점 {len(pts)}개)")
             else:
                 wp = [list(p) for p in simplify(pts)]
-                save_route(patrol=wp)
-                log(f"순찰 경로 저장: 점 {len(pts)}개 -> 꺾이는 지점 {len(wp)}개 {wp}")
+                save_route(**{a.what: wp})
+                log(f"{a.what} 경로 저장: 점 {len(pts)}개 -> 꺾이는 지점 {len(wp)}개 {wp}")
     elif a.cmd == "crop":
         x0, y0, x1, y1 = a.box
         out = ROOT / "templates" / f"{a.name}.png"

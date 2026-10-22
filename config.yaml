@@ -12,7 +12,7 @@ map:                    # 지도를 열어 둔 채 내 점(파란 점)을 목표
   close_button: [1322, 245]  # 지도 창의 빨간 X
   threshold: 0.8             # 점/집 아이콘 인식 임계값
   arrive_px: 25              # 목표에서 이 거리(지도 px) 안이면 도착
-  px_per_second: 40          # 1초 걸으면 지도에서 대략 몇 px 움직이는지 (calibrate 후 로그 보고 조정)
+  px_per_second: 24          # 1초 걸으면 지도에서 대략 몇 px 움직이는지 (calibrate 결과: 약 22~27)
   max_step_seconds: 1.5      # 한 번에 걷는 최대 시간. 이 간격마다 점 위치를 다시 읽음
   goto_timeout_seconds: 90   # 한 지점으로 가는 데 쓰는 최대 시간
 
@@ -28,6 +28,7 @@ town:
   deposit_retries: 5
 
 route:
+  approach: []   # 마을 점선 원 -> 사냥터 시작점으로 가는 길 (record approach). 귀환 때는 거꾸로 되짚는다
   # 사냥터 순찰 지점들의 지도 좌표 [x, y]. 순서대로 돌고 끝나면 처음부터 반복.
   # `python -m xphero where` 를 켜 두고 원하는 곳까지 직접 걸으면서 좌표를 적어.
   patrol: []
