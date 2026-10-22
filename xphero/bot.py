@@ -3,8 +3,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-import cv2
-
+from . import imaging
 from .macro import MacroRunner
 from .mapnav import MapNav
 from .walker import Walker
@@ -48,7 +47,7 @@ class Bot:
 
     def _debug_shot(self, tag):
         path = ROOT / "shots" / f"debug_{tag}_{datetime.now():%H%M%S}.png"
-        cv2.imwrite(str(path), self.dev.screencap())
+        imaging.save(path, self.dev.screencap())
         log(f"디버그 스크린샷 저장: {path}")
 
     # ---- 단계 ----

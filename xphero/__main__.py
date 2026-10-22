@@ -3,9 +3,9 @@ import subprocess
 import time
 from pathlib import Path
 
-import cv2
 import yaml
 
+from . import imaging
 from .bot import Bot, log
 from .device import Device
 from .vision import Vision, load_frame, normalize
@@ -67,12 +67,12 @@ def main():
     elif a.cmd == "crop":
         x0, y0, x1, y1 = a.box
         out = ROOT / "templates" / f"{a.name}.png"
-        cv2.imwrite(str(out), load_frame(a.image)[y0:y1, x0:x1])
+        imaging.save(out, load_frame(a.image)[y0:y1, x0:x1])
         print("저장:", out)
     elif a.cmd == "shot":
         dev = Device(cfg.get("serial"))
         out = ROOT / "shots" / f"{a.name}.png"
-        cv2.imwrite(str(out), dev.screencap())
+        imaging.save(out, dev.screencap())
         print("저장:", out)
     else:
         dev = Device(cfg.get("serial"), dry_run=a.dry_run, jitter=cfg["walk"].get("jitter", 8))

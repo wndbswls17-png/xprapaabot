@@ -3,9 +3,7 @@ import random
 import subprocess
 import time
 
-import cv2
-import numpy as np
-
+from . import imaging
 from .vision import REF_W, normalize
 
 
@@ -36,10 +34,10 @@ class Device:
 
     def screencap(self):
         png = self._run("exec-out", "screencap", "-p", binary=True, timeout=20)
-        img = cv2.imdecode(np.frombuffer(png, np.uint8), cv2.IMREAD_COLOR)
-        if img is None:
-            raise RuntimeError("스크린샷 디코딩 실패")
-        return normalize(img)
+        try:
+            return normalize(imaging.decode(png))
+        except Exception as e:
+            raise RuntimeError(f"스크린샷 디코딩 실패: {e}")
 
     def tap(self, x, y):
         x, y = self._j(x), self._j(y)

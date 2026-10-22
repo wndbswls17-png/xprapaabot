@@ -28,21 +28,21 @@ class MapNav:
         self.dev.tap(*self.cfg["close_button"])
         time.sleep(0.8)
 
-    def locate(self, frame):
-        """(점 좌표 or None, 집 좌표 or None)"""
+    def locate(self, frame, house=True):
+        """(점 좌표 or None, 집 좌표 or None). house=False면 집 탐색을 건너뛴다(더 빠름)."""
         thr = self.cfg["threshold"]
         out = []
-        for name in ("map_dot", "map_house"):
+        for name in ("map_dot", "map_house") if house else ("map_dot",):
             score, pos = self.vision.find(frame, name, MAP_ROI)
             out.append(pos if score >= thr else None)
-        return tuple(out)
+        return tuple(out) + (None,) * (2 - len(out))
 
     # ---- 방향 보정 ----
     def calibrate(self, seconds=1.5):
         """오른쪽/아래로 한 번씩 걸어서 지도 위 점의 이동을 잰다. 지도를 연 상태에서 호출."""
         def dot():
             for _ in range(5):
-                d, _h = self.locate(self.dev.screencap())
+                d, _h = self.locate(self.dev.screencap(), house=False)
                 if d:
                     return d
                 time.sleep(0.5)
@@ -83,7 +83,7 @@ class MapNav:
             frame = self.dev.screencap()
             if stop and stop(frame):
                 return "stop"
-            dot, _ = self.locate(frame)
+            dot, _ = self.locate(frame, house=False)
             if not dot:
                 lost += 1
                 if lost >= 4:

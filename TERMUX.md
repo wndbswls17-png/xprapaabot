@@ -48,5 +48,4 @@ python -m xphero run --delay 20
 ## 문제 해결
 - `adb: command not found` → `pkg install android-tools`
 - `unauthorized`/`failed to connect` → 무선 디버깅을 껐다 켜고 4번(connect)부터 다시. 포트는 켤 때마다 바뀐다
-- opencv 설치 실패 → `pkg install tur-repo` 후 `pkg install opencv-python`, 그래도 안 되면 에러 전문을 알려줄 것
 - 게임이 꺼지거나 Termux 가 죽음 → 3번 배터리 설정 재확인
