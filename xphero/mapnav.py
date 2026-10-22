@@ -99,3 +99,32 @@ class MapNav:
             # 멀면 길게, 가까우면 짧게
             self.walker.move(ux, uy, min(self.cfg["max_step_seconds"], max(0.4, dist / self.cfg["px_per_second"])))
         return "lost"
+
+    # ---- 경로 기록 (사람이 직접 걸은 길을 저장) ----
+    def record(self, seconds, interval=0.8):
+        """지도를 열고 seconds 동안 내 점 위치를 모은다. [(x,y), ...]"""
+        self.open()
+        pts, end = [], time.time() + seconds
+        while time.time() < end:
+            dot, _ = self.locate(self.dev.screencap(), house=False)
+            if dot:
+                pts.append(dot)
+            time.sleep(interval)
+        return pts
+
+
+def simplify(pts, eps=25):
+    """Ramer-Douglas-Peucker: 직선에 가까운 점들을 솎아 꺾이는 지점만 남긴다."""
+    if len(pts) < 3:
+        return list(pts)
+    (x0, y0), (x1, y1) = pts[0], pts[-1]
+    dx, dy = x1 - x0, y1 - y0
+    norm = math.hypot(dx, dy) or 1.0
+    idx, dmax = 0, 0.0
+    for i in range(1, len(pts) - 1):
+        d = abs(dy * (pts[i][0] - x0) - dx * (pts[i][1] - y0)) / norm if norm > 1 else math.hypot(pts[i][0] - x0, pts[i][1] - y0)
+        if d > dmax:
+            idx, dmax = i, d
+    if dmax <= eps:
+        return [pts[0], pts[-1]]
+    return simplify(pts[: idx + 1], eps)[:-1] + simplify(pts[idx:], eps)

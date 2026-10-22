@@ -16,7 +16,7 @@ XP Hero 자동 사냥 보조 봇. PC에 USB(또는 무선 디버깅)로 연결�
 ## 처음 세팅 순서
 1. 마을에서 `python -m xphero shot` 으로 화면이 잡히는지 확인
 2. 지도를 연 채로 `python -m xphero calibrate` — 걷기 방향이 지도에서 어느 쪽인지 폰이 스스로 보정
-3. `python -m xphero where` 를 켜 두고 직접 걸어다니며 **점선 원 위치**와 **순찰 지점**의 좌표를 읽는다
+3. `python -m xphero record patrol --delay 20` 후 게임에서 사냥할 길을 직접 한 바퀴 걷는다 (경로 자동 저장)
 4. `config.yaml` 의 `town.circle`, `route.patrol` 에 좌표를 적는다
 5. `python -m xphero run --dry-run` 후 `python -m xphero run` (마을에서 시작)
 
