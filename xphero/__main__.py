@@ -77,6 +77,10 @@ def main():
         print("가방 가득(MAX):", bot.bag_full(fr), vision.find(fr, "bag_max", d["bag_roi"])[0])
         print("마을 여부     :", bot.in_town(fr),
               vision.find(fr, "home_arrow", d["home_icon_roi"], white=True)[0])
+        from .mapnav import MAP_ROI
+        for name, label in (("map_dot", "지도 내 점 "), ("map_house", "지도 집 아이콘")):
+            sc, pos = vision.find(fr, name, MAP_ROI)
+            print(f"{label}: {'있음' if sc >= cfg['map']['threshold'] else '없음'} 점수 {sc:.2f} 위치 {pos}")
     elif a.cmd in ("calibrate", "record"):
         dev = Device(cfg.get("serial"), jitter=cfg["walk"].get("jitter", 8))
         bot = Bot(cfg, dev, vision)
