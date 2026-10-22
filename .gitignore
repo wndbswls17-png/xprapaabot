@@ -1,0 +1,4 @@
+shots/*
+!shots/.gitkeep
+__pycache__/
+calibration.json
