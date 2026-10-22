@@ -54,6 +54,7 @@ def main():
     p.add_argument("what", choices=["route", "patrol", "circle", "approach"])
     p.add_argument("--seconds", type=int, default=0)
     p.add_argument("--delay", type=int, default=0)
+    p.add_argument("--no-approach", action="store_true", help="저장된 가는 길을 지운다 (사냥터가 마을 바로 옆일 때)")
     p = sub.add_parser("check", help="저장된 스크린샷으로 인식 결과 확인")
     p.add_argument("image")
     p = sub.add_parser("crop", help="스크린샷에서 템플릿 잘라 저장 (좌표는 1440x3120 기준)")
@@ -112,7 +113,7 @@ def main():
                 log(f"점선 원 위치 저장: {[cx, cy]}  (읽은 점 {len(pts)}개)")
             else:
                 wp = [list(p) for p in simplify(pts)]
-                save_route(**{a.what: wp})
+                save_route(**{a.what: wp}, **({"approach": []} if a.no_approach else {}))
                 log(f"{a.what} 경로 저장: 점 {len(pts)}개 -> 꺾이는 지점 {len(wp)}개 {wp}")
     elif a.cmd == "crop":
         x0, y0, x1, y1 = a.box
