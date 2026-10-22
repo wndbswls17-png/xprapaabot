@@ -41,6 +41,7 @@ def main():
     sub = ap.add_subparsers(dest="cmd", required=True)
     r = sub.add_parser("run", help="봇 실행")
     r.add_argument("--dry-run", action="store_true")
+    r.add_argument("--patrol", action="store_true", help="(옛 방식) 마을에서 시작해 기록된 순찰 경로를 돈다")
     r.add_argument("--delay", type=int, default=0, help="시작 전 대기 초 (그 사이 게임 화면으로 전환)")
     p = sub.add_parser("pair", help="무선 디버깅 페어링: pair IP:포트 코드")
     p.add_argument("addr"), p.add_argument("code")
@@ -130,7 +131,8 @@ def main():
         dev = Device(cfg.get("serial"), dry_run=a.dry_run, jitter=cfg["walk"].get("jitter", 8))
         try:
             wait(a.delay)
-            Bot(cfg, dev, vision).run()
+            bot = Bot(cfg, dev, vision)
+            bot.run() if a.patrol else bot.run_spot()
         except KeyboardInterrupt:
             log("중지")
 

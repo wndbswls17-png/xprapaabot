@@ -116,3 +116,34 @@ class Bot:
             self.town()
             self.hunt()
             self.go_home()
+
+    # ---- 자리 지키기 모드: 지금 서 있는 자리에서 사냥, 가방 차면 집에 갔다가 같은 자리로 복귀 ----
+    def wait_full(self, poll=3.0):
+        full = self._confirmed(self.bag_full)
+        while not full(self.dev.screencap()):
+            time.sleep(poll)
+
+    def run_spot(self):
+        if self.in_town(self.dev.screencap()):
+            raise RuntimeError("사냥터에서 시작해줘. (지금 서 있는 자리를 사냥 자리로 기억해)")
+        self.nav.open()
+        spot, _ = self.nav.locate(self.dev.screencap(), house=False)
+        self.nav.close()
+        if not spot:
+            self._debug_shot("no_dot")
+            raise RuntimeError("지도에서 내 점을 못 찾았어.")
+        log(f"사냥 자리 기억: {spot}")
+        self.cfg["route"]["approach"] = []
+        while True:
+            log("사냥 중 (가방 가득 찰 때까지 대기)")
+            self.wait_full()
+            log("가방 가득 참 -> 집으로")
+            self.nav.open()
+            self.go_home()
+            self.town()
+            self.trips += 1
+            log(f"입금 완료 (#{self.trips}) -> 사냥 자리로 복귀")
+            self.nav.open()
+            res = self.nav.goto(spot, self.cfg["map"].get("spot_tol", 30))
+            self.nav.close()
+            log(f"복귀: {res}")
